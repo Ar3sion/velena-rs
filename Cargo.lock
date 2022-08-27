@@ -5,3 +5,10 @@ version = 3
 [[package]]
 name = "velena-rs"
 version = "0.1.0"
+
+[[package]]
+name = "velena-rs-legacy-cli"
+version = "0.1.0"
+dependencies = [
+ "velena-rs",
+]
