@@ -10,29 +10,31 @@ use std::ops::{Deref, DerefMut};
 use std::rc::{Rc, Weak};
 use crate::board::Board;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum NodeType {
     And,
     Or
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 enum NodeState {
     NotEvaluated,
     Evaluated,
     Expanded
 }
 
+#[derive(Debug)]
 enum NodeValue {
     Disproved,
     Unknown,
     Proved
 }
 
+#[derive(Debug)]
 struct Node {
     board: Board,
     child: [Option<Rc<RefCell<Node>>>; Board::WIDTH],
-    parent: [Option<Weak<RefCell<Node>>>; Board::HEIGHT],
+    parent: [Option<Weak<RefCell<Node>>>; Board::WIDTH],
     state: NodeState,
     value: NodeValue,
     proof: usize,
@@ -55,7 +57,9 @@ impl Node {
     }
     
     fn evaluate(&mut self, root_node_type: NodeType, fight: bool) -> Option<usize> {
-        self.state = NodeState::Evaluated;
+        if self.state == NodeState::NotEvaluated {
+            self.state = NodeState::Evaluated;
+        }
 
         if self.board.is_full() {
             self.value = if fight {
@@ -165,15 +169,6 @@ impl Node {
             NodeState::NotEvaluated => panic!()
         }
     }
-    
-    fn update_ancestors(&mut self) {
-        self.set_proof_and_disproof_numbers();
-        for parent in &self.parent {
-            if let Some(parent) = parent {
-                parent.upgrade().unwrap().borrow_mut().update_ancestors();
-            }
-        }
-    }
 }
 
 fn select_most_proving_node<'a>(mut node: Rc<RefCell<Node>>, best_move: &mut Option<usize>) -> Rc<RefCell<Node>> {
@@ -188,7 +183,7 @@ fn select_most_proving_node<'a>(mut node: Rc<RefCell<Node>>, best_move: &mut Opt
                 NodeType::And => {
                     for column in NODE_SEQUENCE_ORDER {
                         if let Some(child) = node_borrow.child[column].as_ref() {
-                            if child.borrow().proof == node_borrow.proof {
+                            if child.borrow().disproof == node_borrow.disproof {
                                 good_child = Some(column);
                                 break;
                             }
@@ -198,7 +193,7 @@ fn select_most_proving_node<'a>(mut node: Rc<RefCell<Node>>, best_move: &mut Opt
                 NodeType::Or => {
                     for column in NODE_SEQUENCE_ORDER {
                         if let Some(child) = node_borrow.child[column].as_ref() {
-                            if child.borrow().disproof == node_borrow.disproof {
+                            if child.borrow().proof == node_borrow.proof {
                                 good_child = Some(column);
                                 break;
                             }
@@ -267,6 +262,15 @@ fn develop(node: Rc<RefCell<Node>>, nodes: &mut HashMap<u64, Rc<RefCell<Node>>>,
     }
 }
 
+fn update_ancestors(node: Rc<RefCell<Node>>) {
+    node.borrow_mut().set_proof_and_disproof_numbers();
+    for column in 0..Board::WIDTH {
+        if let Some(parent) = &node.borrow().parent[column] {
+            update_ancestors(parent.upgrade().unwrap());
+        }
+    }
+}
+
 fn heuristic_proof_number_search(root: Rc<RefCell<Node>>, nodes: &mut HashMap<u64, Rc<RefCell<Node>>>, fight: bool) -> Option<usize> {
     const MAX_NODE_COUNT: usize = 2800;
     
@@ -287,7 +291,7 @@ fn heuristic_proof_number_search(root: Rc<RefCell<Node>>, nodes: &mut HashMap<u6
     } && nodes_expanded <= MAX_NODE_COUNT {
         let most_proving_node = select_most_proving_node(root.clone(), &mut best_move);
         develop(most_proving_node.clone(), nodes, root_type, fight, &mut nodes_expanded);
-        most_proving_node.borrow_mut().update_ancestors();
+        update_ancestors(most_proving_node);
     }
 
     {

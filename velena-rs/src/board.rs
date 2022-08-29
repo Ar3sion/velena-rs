@@ -25,7 +25,7 @@ pub enum Square {
     Taken(Player)
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Board {
     current_player: u64,
     mask: u64,
