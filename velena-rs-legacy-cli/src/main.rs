@@ -8,10 +8,10 @@ use std::io;
 use crate::play_game::CLIError;
 
 fn main() {
-    let mut line = String::new();
     let mut quit = false;
 
     while !quit {
+        let mut line = String::new();
         io::stdin().read_line(&mut line).unwrap();
 
         if line.starts_with("q") {

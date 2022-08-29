@@ -4,10 +4,10 @@
 
 use crate::board::Board;
 
-pub const GROUP_COUNT: usize = 69;
+pub const _GROUP_COUNT: usize = 69;
 
-const fn generate_groups() -> [[(usize, usize); 4]; GROUP_COUNT] {
-    let mut output = [[(0, 0); 4]; GROUP_COUNT];
+const fn _generate_groups() -> [[(usize, usize); 4]; _GROUP_COUNT] {
+    let mut output = [[(0, 0); 4]; _GROUP_COUNT];
     let mut i = 0;
     
     // Horizontal lines
@@ -77,4 +77,4 @@ const fn generate_groups() -> [[(usize, usize); 4]; GROUP_COUNT] {
     output
 }
 
-pub const GROUPS: [[(usize, usize); 4]; GROUP_COUNT] = generate_groups();
+pub const _GROUPS: [[(usize, usize); 4]; _GROUP_COUNT] = _generate_groups();
